@@ -1,4 +1,4 @@
-<div align="center">
+<div style="text-align: center">
   <img src="docs/_static/image/aoe-logo.svg" width="250"/>
 
 [![PyPI](https://img.shields.io/pypi/v/OpenAOE)](https://pypi.org/project/OpenAOE)
