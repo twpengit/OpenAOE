@@ -79,6 +79,8 @@ const RunningMario = () => {
 function ChatMessage(props: { message: ChatMessageProps, sessionInfo: {id: number, name: string, bot: string} }) {
     const { models } = useContext(GlobalConfigContext);
     const [showDate, setShowDate] = useState(false);
+    const [showCopy, setShowCopy] = React.useState(false);
+
     const { message } = props;
     const isUser = message.sender_type === 'user' || message.provider === 'user';
     const isAdmin = message.sender_type === 'admin' || message.provider === 'admin';
@@ -88,6 +90,10 @@ function ChatMessage(props: { message: ChatMessageProps, sessionInfo: {id: numbe
         isUser ? styles.chatUser : styles.chatBot,
     );
     const configStore = useConfigStore();
+
+    const handleCopyMsg = () => {
+        copyToClipboard(message.text);
+    };
 
     const getModel = () => {
         if (isUser) {
@@ -131,7 +137,16 @@ function ChatMessage(props: { message: ChatMessageProps, sessionInfo: {id: numbe
                         title={message.model || configStore.username}
                         className={className}
                         style={{ borderRadius: !isUser ? '1px 10px 10px 10px' : '10px 1px 10px 10px' }}
+                        onMouseOver={() => setShowCopy(true)}
+                        onFocus={() => setShowCopy(true)}
+                        onMouseLeave={() => setShowCopy(false)}
                     >
+                        {showCopy && (
+                            <span
+                                className={styles.copyCodeBtn}
+                                {...getNeedEventCallback(handleCopyMsg)}
+                            />
+                        )}
                         {message.stream && <RunningMario />}
                         {!isUser && (
                             <div className={styles.chatOperations}>
@@ -206,7 +221,6 @@ function ChatSession(props: { session: ChatSessionProps }) {
                     );
                 })}
             </div>
-            {/* <ChatOperation modelName={session.name} /> */}
         </div>
     );
 }
