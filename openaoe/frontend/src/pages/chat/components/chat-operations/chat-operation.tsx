@@ -1,6 +1,8 @@
 import { Tooltip } from 'sea-lion-ui';
 import { getNeedEventCallback, scrollToBottom } from '@utils/utils.ts';
-import { BASE_IMG_URL, CLEAR_CONTEXT, SERIAL_SESSION } from '@constants/models.ts';
+import {
+    BASE_IMG_URL, CLEAR_CONTEXT, PARALLEL_MODE, SERIAL_MODE, SERIAL_SESSION
+} from '@constants/models.ts';
 import React, { useContext, useEffect } from 'react';
 import { GlobalConfigContext } from '@components/global-config/global-config-context.tsx';
 import styles from './chat-operation.module.less';
@@ -122,51 +124,112 @@ const RetryIcon = () => {
 };
 const ChatOperation = (props: ChatOperationProps) => {
     const { models, streamModels } = useContext(GlobalConfigContext);
-    const { modelName } = props;
     const chatStore = useChatStore();
+    const configStore = useConfigStore();
     const { sessions } = chatStore;
-    const currSession = sessions.find((session) => session.name === modelName);
     const botStore = useBotStore();
+    const hasMessage = sessions.some((session) => {
+        if (configStore.mode === PARALLEL_MODE && session.name !== SERIAL_SESSION) {
+            return session.messages.length > 0;
+        }
+        if (configStore.mode === SERIAL_MODE && session.name === SERIAL_SESSION) {
+            return session.messages.length > 0;
+        }
+        return false;
+    });
+
+    const hasStreamSession = sessions.some((session) => {
+        if (configStore.mode === PARALLEL_MODE && session.name !== SERIAL_SESSION) {
+            return chatStore.lastMessage(session.name).stream;
+        }
+        if (configStore.mode === SERIAL_MODE && session.name === SERIAL_SESSION) {
+            return chatStore.lastMessage(SERIAL_SESSION).stream;
+        }
+        return false;
+    });
 
     /**
      * clear context for current session, then scroll to bottom automatically
      */
     const handleClearContext = () => {
-        const sessionIdx = chatStore.sessions.findIndex((session) => session.name === modelName);
-        const newSession = chatStore.sessions[sessionIdx];
-        if (chatStore.lastMessage(newSession.name).sender_type === CLEAR_CONTEXT) return;
+        if (configStore.mode === PARALLEL_MODE) {
+            chatStore.sessions.forEach((session, sessionIdx) => {
+                if (session.name === SERIAL_SESSION) return;
+                const newSession = session;
+                if (chatStore.lastMessage(session.name).sender_type === CLEAR_CONTEXT) return;
 
-        newSession.clearContextIndex = newSession.messages.length || 0;
-        chatStore.updateSession(sessionIdx, newSession);
-        chatStore.onNewMessage(createMessage({
-            model: 'admin',
-            text: '',
-            sender_type: CLEAR_CONTEXT,
-            id: Date.now(),
-            stream: false,
-            isError: true,
-        }), sessionIdx);
-        scrollToBottom(`chat-wrapper-${newSession.id}`);
+                newSession.clearContextIndex = session.messages.length || 0;
+                chatStore.updateSession(sessionIdx, newSession);
+                chatStore.onNewMessage(createMessage({
+                    model: 'admin',
+                    text: '',
+                    sender_type: CLEAR_CONTEXT,
+                    id: Date.now(),
+                    stream: false,
+                    isError: true,
+                }), sessionIdx);
+                scrollToBottom(`chat-wrapper-${newSession.id}`);
+            });
+        } else if (configStore.mode === SERIAL_MODE) {
+            const sessionIdx = chatStore.sessions.findIndex((session) => session.name === SERIAL_SESSION);
+            const newSession = chatStore.sessions[sessionIdx];
+            if (chatStore.lastMessage(newSession.name).sender_type === CLEAR_CONTEXT) return;
+
+            newSession.clearContextIndex = newSession.messages.length || 0;
+            chatStore.updateSession(sessionIdx, newSession);
+            chatStore.onNewMessage(createMessage({
+                model: 'admin',
+                text: '',
+                sender_type: CLEAR_CONTEXT,
+                id: Date.now(),
+                stream: false,
+                isError: true,
+            }), sessionIdx);
+            scrollToBottom(`chat-wrapper-${newSession.id}`);
+        }
     };
 
     /**
      * clear history for current session
      */
     const handleClearHistory = () => {
-        const sessionIdx = sessions.findIndex((session) => session.name === modelName);
-
-        chatStore.updateSession(sessionIdx, { messages: [], clearContextIndex: 0 });
+        if (configStore.mode === PARALLEL_MODE) {
+            chatStore.sessions.forEach((session, sessionIdx) => {
+                if (session.name === SERIAL_SESSION) return;
+                chatStore.updateSession(sessionIdx, { messages: [], clearContextIndex: 0 });
+            });
+        } else if (configStore.mode === SERIAL_MODE) {
+            const sessionIdx = sessions.findIndex((session) => session.name === SERIAL_SESSION);
+            chatStore.updateSession(sessionIdx, { messages: [], clearContextIndex: 0 });
+        }
     };
 
     const handleStopStream = () => {
-        chatStore.closeController(modelName);
+        if (configStore.mode === PARALLEL_MODE) {
+            chatStore.sessions.forEach((session) => {
+                if (session.name === SERIAL_SESSION) return;
+                chatStore.closeController(session.name);
+            });
+        } else if (configStore.mode === SERIAL_MODE) {
+            chatStore.closeController(SERIAL_SESSION);
+        }
     };
 
     const handleRetry = () => {
-        const model = currSession.name === SERIAL_SESSION ? botStore.currentBot : chatStore.lastBotMessage(currSession.name).model;
-        const provider = models[model]?.provider || '';
-        const isStream = streamModels.includes(model);
-        chatStore.retry(currSession.name, provider, model, isStream);
+        if (configStore.mode === PARALLEL_MODE) {
+            chatStore.sessions.forEach((session) => {
+                if (session.name === SERIAL_SESSION) return;
+                const model = chatStore.lastBotMessage(session.name)?.model;
+                const provider = models[model]?.provider || '';
+                const isStream = streamModels.includes(model);
+                chatStore.retry(session.name, provider, model, isStream);
+            });
+        } else if (configStore.mode === SERIAL_MODE) {
+            const model = botStore.currentBot;
+            const provider = models[model]?.provider || '';
+            const isStream = streamModels.includes(model);
+            chatStore.retry(SERIAL_SESSION, provider, model, isStream);
+        }
     };
 
     useEffect(() => {
@@ -175,10 +238,11 @@ const ChatOperation = (props: ChatOperationProps) => {
             handleStopStream();
         };
     }, []);
+
     return (
         <div className={styles.homeOperation}>
             {/** if the last message is generating，which means: stream=true */}
-            {chatStore.lastMessage(modelName).stream && (
+            {hasMessage && hasStreamSession && (
                 <Tooltip title="Stop generating" className={styles.opBtn}>
                     <div {...getNeedEventCallback(handleStopStream)}>
                         <img
@@ -191,7 +255,7 @@ const ChatOperation = (props: ChatOperationProps) => {
                 </Tooltip>
             )}
             {/** if message list is not empty && stream=false */}
-            {!!currSession.messages?.length && !chatStore.lastMessage(modelName).stream && (
+            {hasMessage && !hasStreamSession && (
                 <>
                     <Tooltip title="Clear context" className={styles.opBtn}>
                         <div {...getNeedEventCallback(handleClearContext)}>

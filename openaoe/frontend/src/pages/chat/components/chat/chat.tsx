@@ -206,7 +206,7 @@ function ChatSession(props: { session: ChatSessionProps }) {
                     );
                 })}
             </div>
-            <ChatOperation modelName={session.name} />
+            {/* <ChatOperation modelName={session.name} /> */}
         </div>
     );
 }

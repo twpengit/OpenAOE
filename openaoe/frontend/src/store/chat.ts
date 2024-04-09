@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 import { scrollToBottom } from '@utils/utils.ts';
 import { getHeaders, getPayload, getUrl } from '@services/fetch.ts';
 import { fetchBotAnswer } from '@services/home.ts';
-import { DEFAULT_BOT, SERIAL_SESSION, STREAM_BOT } from '@constants/models.ts';
+import { DEFAULT_BOT, SERIAL_SESSION } from '@constants/models.ts';
 
 export interface ChatMessage {
     text: string;
@@ -126,7 +126,10 @@ export const useChatStore = create<ChatStore>()(
                 }
             },
             retry(bot: '', provider: '', model: '', isStreamApi = true) {
-                const text = get().lastUserMessage(bot).text;
+                const text = get().lastUserMessage(bot)?.text;
+                if (!text) {
+                    return;
+                }
                 if ((get().lastMessage(bot).id === get().lastBotMessage(bot).id) && get().getSession(bot).clearContextIndex !== get().getSession(bot).messages.length) {
                     // If the last message is a reply from the bot and the context is not cleared yet, replace the last two messages,
                     // Otherwise resend the last conversation
@@ -319,7 +322,8 @@ export const useChatStore = create<ChatStore>()(
                 return createMessage({ text: '' });
             },
             lastUserMessage(sessionName) {
-                const session = get().sessions.find((session) => session.name === sessionName);
+                const session = get().sessions
+                    .find((session) => session.name === sessionName);
                 if (!session) return createMessage({ text: '' });
                 const messages = [...session.messages];
                 if (Array.isArray(messages) && messages.length > 0) {
@@ -328,7 +332,8 @@ export const useChatStore = create<ChatStore>()(
                 return createMessage({ text: '' });
             },
             lastBotMessage(sessionName) {
-                const session = get().sessions.find((session) => session.name === sessionName);
+                const session = get().sessions
+                    .find((session) => session.name === sessionName);
                 if (!session) return createMessage({ text: '' });
                 const messages = [...session.messages];
                 if (Array.isArray(messages) && messages.length > 0) {
