@@ -47,16 +47,6 @@ const PromptInput = () => {
     const [isComposing, setIsComposing] = useState(false);
     const [isEmpty, setIsEmpty] = useState(true);
 
-    /** clean input
-     * @param html innerHTML
-     * Use hiddenRef as an intermediary to solve the bug of missing line breaks
-     */
-    const cleanInput = (html: string) => {
-        html = html.replace(/<span class="modelName">.*?<\/span>/g, '');
-        hiddenRef.current.innerHTML = html;
-        return hiddenRef.current.innerText || '';
-    };
-
     /** filter html tags to prevent XSS attacks
      * @param content innerHTML
      * @param updateCaretFlag whether to update caret position
@@ -169,7 +159,7 @@ const PromptInput = () => {
             return;
         }
         const target = e.target as HTMLDivElement;
-        setCurrPrompt(cleanInput(target.innerHTML));
+        setCurrPrompt(target.innerText);
         const content = target.innerHTML;
         handleContentChange(content);
     };
@@ -184,7 +174,7 @@ const PromptInput = () => {
             return;
         }
         const target = e.target as HTMLDivElement;
-        setCurrPrompt(cleanInput(target.innerHTML));
+        setCurrPrompt(target.innerText);
         const content = target.innerHTML;
         handleContentChange(content);
     };
