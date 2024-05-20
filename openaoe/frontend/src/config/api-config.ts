@@ -4,6 +4,18 @@
  *  Add more models' basic API configuration here.
  */
 
+const sensetime = {
+    model: 'SenseChat-5',
+    prompt: '',
+    messages: [],
+    role_meta: {
+        user_name: 'user',
+        bot_name: 'assistant'
+    },
+    stream: true,
+    type: 'json'
+};
+
 const minimax = {
     model: 'abab5-chat',
     prompt: '',
@@ -100,16 +112,14 @@ const gemma = {
     stream: true
 };
 
-const ali = {
-    model: 'gemma',
-    messages: [],
-    stream: true
-};
-
 const API_PREFIX = '';
 
 const API = new Map();
 /** Set API configuration for each provider. */
+API.set('sensetime', {
+    url: `${API_PREFIX}/v1/sensetime/v1/chat/completions`,
+    ...sensetime
+});
 API.set('minimax', {
     url: `${API_PREFIX}/v1/minimax/v1/text/chat-stream`,
     ...minimax
@@ -141,10 +151,6 @@ API.set('mistral', {
 API.set('gemma', {
     url: `${API_PREFIX}/v1/google/v1/gemma/chat`,
     ...gemma
-});
-API.set('ali', {
-    url: `${API_PREFIX}/v1/ali/v1/qwen/chat`,
-    ...ali
 });
 
 export default API;
