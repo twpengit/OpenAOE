@@ -4,6 +4,18 @@
  *  Add more models' basic API configuration here.
  */
 
+const sensetime = {
+    model: 'SenseChat-5',
+    prompt: '',
+    messages: [],
+    role_meta: {
+        user_name: 'user',
+        bot_name: 'assistant'
+    },
+    stream: true,
+    type: 'json'
+};
+
 const minimax = {
     model: 'abab5-chat',
     prompt: '',
@@ -104,6 +116,10 @@ const API_PREFIX = '';
 
 const API = new Map();
 /** Set API configuration for each provider. */
+API.set('sensetime', {
+    url: `${API_PREFIX}/v1/sensetime/v1/chat/completions`,
+    ...sensetime
+});
 API.set('minimax', {
     url: `${API_PREFIX}/v1/minimax/v1/text/chat-stream`,
     ...minimax

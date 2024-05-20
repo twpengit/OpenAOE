@@ -10,6 +10,7 @@ PROVIDER_MINIMAX = "minimax"
 PROVIDER_GOOGLE = "google"
 PROVIDER_XUNFEI = "spark"
 PROVIDER_CLAUDE = "claude"
+PROVIDER_SENSETIME = "sensetime"
 PROVIDER_INTERNLM = "internlm"
 PROVIDER_MISTRAL = "mistral"
 

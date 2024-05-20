@@ -17,6 +17,13 @@ export const ADMIN_INFO = {
 };
 
 export const models = {
+    'SenseChat-5': {
+        provider: 'sensetime',
+        webui: {
+            avatar: 'https://platform.sensenova.cn/assets/logo.9f426959.svg',
+            background: 'linear-gradient(rgb(3 26 108 / 85%) 0%, rgb(29 60 161 / 85%) 100%)',
+        },
+    },
     'internlm-chat-7b': {
         provider: 'internlm',
         webui: {

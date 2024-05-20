@@ -1,5 +1,21 @@
 ---
 models:
+    SenseChat-5:
+        provider: sensetime
+        webui:
+            avatar: 'https://platform.sensenova.cn/assets/logo.9f426959.svg'
+            background: 'linear-gradient(rgb(3 26 108 / 85%) 0%, rgb(29 60 161 / 85%) 100%)'
+            payload:
+                messages: [ ]
+                model: SenseChat-5
+                prompt: ""
+                role_meta:
+                    user_name: "user"
+                    bot_name: "assistant"
+                stream: true
+        api:
+            api_base: http://10.4.11.219:3000
+            api_key: sk-hC6x6G3yVEmn8kQs1436B28fEdA14931928670E491D21c9a
     internlm-chat-7b:
         provider: internlm
         webui:
