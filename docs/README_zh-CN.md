@@ -137,3 +137,36 @@ python -m openaoe.main -f /path/to/your/config-template.yaml
 - 在 `openaoe/frontend/src/config/api-config.ts` 文件里面添加新模型的API请求payload配置，比如 `url`, `method`, `parameter` 等。
 - 在 `openaoe/frontend/src/services/fetch.ts` 文件里修改API和处理特殊情况, 以适配你的API定义.
 
+## 如何添加新的通过oneapi接入的模型API
+### 配置文件
+- 在 `openaoe/backend/config/config-template.yaml` 文件里面添加新的模型配置, 参考SenseChat-5的配置如下:
+      SenseChat-5:
+        provider: sensetime
+        webui:
+            avatar: 'https://platform.sensenova.cn/assets/logo.9f426959.svg'
+            background: 'linear-gradient(rgb(3 26 108 / 85%) 0%, rgb(29 60 161 / 85%) 100%)'
+            payload:
+                messages: [ ]
+                model: SenseChat-5
+                prompt: ""
+                role_meta:
+                    user_name: "user"
+                    bot_name: "assistant"
+                stream: true
+        api:
+            api_base: http://10.4.11.219:3000
+            api_key: sk-hC6x6G3yVEmn8kQs1436B28fEdA14931928670E491D21c9a
+因为后端通过oneapi对接, 配置文件中只需要修改模型名称
+### 前端
+- 在 `openaoe/frontend/src/config/model-config.ts` 文件里面添加新模型的基本信息（用于展示），比如 `name`, `avatar`, `provider` 等
+- 在 `openaoe/frontend/src/config/api-config.ts` 文件里面添加新模型的API请求payload配置，比如 `url`, `method`, `parameter` 等。
+- 在 `openaoe/frontend/src/services/fetch.ts` 文件里修改API和处理特殊情况, 以适配你的API定义.
+
+### 后端
+- 新增 `openaoe/backend/api/route_sensetime.py` 文件
+- 新增 `openaoe/backend/model/sensetime.py` 文件
+- 新增 `openaoe/backend/service/service_sensetime.py` 文件
+- 修改 `openaoe/backend/config/constant.py` 文件
+
+### 入口
+- 修改`openaoe/main.py` 文件, 加入新创建的路由
